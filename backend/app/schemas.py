@@ -128,8 +128,15 @@ class AdminCategoryCreate(BaseModel):
 
 class AdminCategoryUpdate(BaseModel):
     name: str | None = None
+    slug: str | None = None
     description: str | None = None
     archived: bool | None = None
+
+
+class CategoryDeleteOut(BaseModel):
+    status: str
+    id: int
+    reassigned_products: int = 0
 
 
 class AdminOrderItemOut(BaseModel):

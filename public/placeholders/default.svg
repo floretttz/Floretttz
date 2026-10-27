@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF9F4"/>
+      <stop offset="50%" stop-color="#FDF2EC"/>
+      <stop offset="100%" stop-color="#FAE7DF"/>
+    </linearGradient>
+    <linearGradient id="roseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E88A9E"/>
+      <stop offset="100%" stop-color="#B35D6F"/>
+    </linearGradient>
+    <linearGradient id="forestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3D6852"/>
+      <stop offset="100%" stop-color="#29483B"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#4A2828" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bgGrad)"/>
+  <circle cx="400" cy="380" r="260" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="400" cy="380" r="220" fill="none" stroke="#E3C4BC" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <!-- Floretttz Signature Artisan Crest -->
+  <g filter="url(#softShadow)" transform="translate(400, 370)">
+    <!-- Laurel Wreath Leaves Left -->
+    <path d="M-60 140 C-180 80 -180 -80 -70 -140" fill="none" stroke="#29483B" stroke-width="4" stroke-linecap="round"/>
+    <!-- Leaves on Left Wreath -->
+    <path d="M-100 110 Q-130 90 -120 70 Q-100 80 -100 110 Z" fill="#3D6852"/>
+    <path d="M-135 60 Q-165 40 -150 20 Q-130 30 -135 60 Z" fill="#4D7C65"/>
+    <path d="M-150 -10 Q-180 -30 -165 -50 Q-145 -40 -150 -10 Z" fill="#3D6852"/>
+    <path d="M-130 -80 Q-150 -110 -130 -120 Q-115 -105 -130 -80 Z" fill="#4D7C65"/>
+
+    <!-- Laurel Wreath Leaves Right -->
+    <path d="M60 140 C180 80 180 -80 70 -140" fill="none" stroke="#29483B" stroke-width="4" stroke-linecap="round"/>
+    <!-- Leaves on Right Wreath -->
+    <path d="M100 110 Q130 90 120 70 Q100 80 100 110 Z" fill="#3D6852"/>
+    <path d="M135 60 Q165 40 150 20 Q130 30 135 60 Z" fill="#4D7C65"/>
+    <path d="M150 -10 Q180 -30 165 -50 Q145 -40 150 -10 Z" fill="#3D6852"/>
+    <path d="M130 -80 Q150 -110 130 -120 Q115 -105 130 -80 Z" fill="#4D7C65"/>
+
+    <!-- Bottom Intertwined Ribbon Knot -->
+    <circle cx="0" cy="140" r="14" fill="#B35D6F"/>
+    <path d="M-12 144 Q-35 180 -55 210" stroke="#B35D6F" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M12 144 Q35 180 55 210" stroke="#B35D6F" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+    <!-- Center Artisan Rose Badge -->
+    <circle cx="0" cy="0" r="105" fill="#FFFFFF" stroke="#E3C4BC" stroke-width="3"/>
+    <circle cx="0" cy="0" r="92" fill="#FFF8F4"/>
+    
+    <!-- Rose Blossom in Center -->
+    <circle cx="0" cy="-8" r="48" fill="url(#roseGrad)"/>
+    <path d="M-25 -14 Q0 -36 25 -14 Q12 18 -20 12 Q-26 0 -6 -14 Q14 -8 7 6" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" opacity="0.9"/>
+    
+    <!-- Sub-text in Crest -->
+    <text x="0" y="65" font-family="Georgia, Cambria, serif" font-size="14" font-weight="700" fill="#29483B" text-anchor="middle" letter-spacing="3">
+      FLORETTTZ
+    </text>
+  </g>
+
+  <!-- Sparkles -->
+  <g fill="#D97706" opacity="0.85">
+    <path d="M220 230 Q225 245 240 250 Q225 255 220 270 Q215 255 200 250 Q215 245 220 230 Z"/>
+    <path d="M580 220 Q584 232 596 236 Q584 240 580 252 Q576 240 564 236 Q576 232 580 220 Z"/>
+  </g>
+
+  <!-- Bottom Brand Sample Badge -->
+  <g transform="translate(400, 720)">
+    <rect x="-190" y="-22" width="380" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.94" stroke="#29483B" stroke-width="1.5" filter="url(#softShadow)"/>
+    <circle cx="-160" cy="0" r="5" fill="#B35D6F"/>
+    <text x="-145" y="5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="700" fill="#29483B" letter-spacing="1.2">
+      FLORETTTZ • HANDMADE CRAFT SAMPLE
+    </text>
+  </g>
+</svg>

@@ -70,14 +70,14 @@ export function SiteHeader() {
           <div className="relative w-full min-w-0">
             <Search
               aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-forest"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-forest"
             />
             <input
               id="header-search"
               type="search"
               value={term}
               onChange={(event) => setTerm(event.target.value)}
-              className="field pl-9 w-full text-sm pr-3"
+              className="field field-search pl-11 w-full text-sm pr-3"
               placeholder="Search bouquets, gifts..."
             />
           </div>
@@ -133,14 +133,14 @@ export function SiteHeader() {
             <div className="relative flex-1 min-w-0">
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-forest"
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-forest"
               />
               <input
                 id="mobile-search"
                 type="search"
                 value={term}
                 onChange={(event) => setTerm(event.target.value)}
-                className="field pl-9 w-full text-sm"
+                className="field field-search pl-11 w-full text-sm"
                 placeholder="Search bouquets, gifts, decor..."
               />
             </div>

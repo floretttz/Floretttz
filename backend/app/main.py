@@ -9,7 +9,7 @@ import jwt
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth import Principal, get_current_principal, get_optional_principal, require_role
@@ -19,6 +19,7 @@ from app.models import Category, Order, Product, ProductVariant, RoleAssignment
 from app.schemas import (
     AdminCategoryCreate,
     AdminCategoryUpdate,
+    CategoryDeleteOut,
     AdminOrderOut,
     AdminOrderUpdate,
     AdminOverviewOut,
@@ -66,6 +67,12 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
 )
+
+from fastapi.staticfiles import StaticFiles
+uploads_dir = Path(__file__).resolve().parent.parent.parent / "public" / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
 
 
 @app.get("/health", tags=["health"])
@@ -420,13 +427,97 @@ def admin_update_category(
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        if value is not None:
-            setattr(category, key, value)
+    if payload.slug is not None:
+        clean_slug = payload.slug.strip()
+        if clean_slug:
+            conflict = db.scalar(
+                select(Category).where(Category.slug == clean_slug, Category.id != category_id)
+            )
+            if conflict:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Category slug already in use by another category",
+                )
+            category.slug = clean_slug
+
+    if payload.name is not None:
+        clean_name = payload.name.strip()
+        if clean_name:
+            conflict = db.scalar(
+                select(Category).where(Category.name == clean_name, Category.id != category_id)
+            )
+            if conflict:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Category name already in use by another category",
+                )
+            category.name = clean_name
+
+    if payload.description is not None:
+        category.description = payload.description.strip() if payload.description.strip() else None
+
+    if payload.archived is not None:
+        category.archived = payload.archived
 
     db.commit()
     db.refresh(category)
     return category
+
+
+@app.get("/api/admin/categories/{category_id}/product-count", tags=["admin"])
+def admin_get_category_product_count(
+    category_id: int,
+    db: Session = Depends(get_db),
+    _: Principal = Depends(require_role("catalog_manager", "admin")),
+) -> dict:
+    category = db.scalar(select(Category).where(Category.id == category_id))
+    if not category:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+    count = db.scalar(select(func.count(Product.id)).where(Product.category_id == category_id)) or 0
+    return {"category_id": category_id, "product_count": count}
+
+
+@app.delete("/api/admin/categories/{category_id}", response_model=CategoryDeleteOut, tags=["admin"])
+def admin_delete_category(
+    category_id: int,
+    reassign_to_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: Principal = Depends(require_role("catalog_manager", "admin")),
+) -> CategoryDeleteOut:
+    category = db.scalar(select(Category).where(Category.id == category_id))
+    if not category:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+
+    product_count = db.scalar(select(func.count(Product.id)).where(Product.category_id == category_id)) or 0
+
+    if product_count > 0:
+        if reassign_to_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Cannot delete category: {product_count} associated product(s) are assigned to it. Please reassign them to another category first.",
+            )
+        if reassign_to_id == category_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot reassign products to the same category being deleted",
+            )
+        target_cat = db.scalar(select(Category).where(Category.id == reassign_to_id))
+        if not target_cat:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Reassignment target category not found",
+            )
+        db.execute(update(Product).where(Product.category_id == category_id).values(category_id=reassign_to_id))
+        db.flush()
+
+    db.delete(category)
+    db.commit()
+    return CategoryDeleteOut(
+        status="deleted",
+        id=category_id,
+        reassigned_products=product_count if reassign_to_id is not None else 0,
+    )
+
 
 
 @app.get("/api/admin/orders", response_model=list[AdminOrderOut], tags=["admin"])
@@ -488,6 +579,7 @@ def admin_assign_role(
 async def admin_upload_image(
     file: UploadFile = File(...),
     _: Principal = Depends(require_role("catalog_manager", "admin")),
+    app_settings: Settings = Depends(get_settings),
 ) -> ImageUploadOut:
     max_size = 5 * 1024 * 1024  # 5MB
     content = await file.read()
@@ -520,12 +612,35 @@ async def admin_upload_image(
     with open(target_path, "wb") as f:
         f.write(content)
 
+    final_url = f"/uploads/{filename}"
+
+    # Persistent Supabase Storage upload when service role key is configured
+    if app_settings.supabase_url and app_settings.supabase_service_role_key:
+        try:
+            import httpx
+            sb_url = app_settings.supabase_url.rstrip("/")
+            storage_endpoint = f"{sb_url}/storage/v1/object/product-images/products/{filename}"
+            headers = {
+                "Authorization": f"Bearer {app_settings.supabase_service_role_key}",
+                "apikey": app_settings.supabase_service_role_key,
+                "Content-Type": mime,
+                "x-upsert": "true",
+            }
+            resp = httpx.post(storage_endpoint, content=content, headers=headers, timeout=10.0)
+            if resp.status_code in (200, 201):
+                final_url = f"{sb_url}/storage/v1/object/public/product-images/products/{filename}"
+            else:
+                print(f"[Supabase Storage upload returned {resp.status_code}]: {resp.text}")
+        except Exception as e:
+            print(f"[Supabase Storage upload exception]: {e}")
+
     return ImageUploadOut(
         filename=filename,
-        url=f"/uploads/{filename}",
+        url=final_url,
         size_bytes=len(content),
         mime_type=mime,
     )
+
 
 
 @app.get("/api/admin/notion/status", tags=["admin"])

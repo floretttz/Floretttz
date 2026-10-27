@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF9F4"/>
+      <stop offset="50%" stop-color="#FDF0EC"/>
+      <stop offset="100%" stop-color="#FCE6E0"/>
+    </linearGradient>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F2DEC9"/>
+      <stop offset="100%" stop-color="#DFC4A9"/>
+    </linearGradient>
+    <linearGradient id="roseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E88A9E"/>
+      <stop offset="100%" stop-color="#B35D6F"/>
+    </linearGradient>
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFDD55"/>
+      <stop offset="100%" stop-color="#F5A623"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4A2828" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bgGrad)"/>
+  <circle cx="400" cy="380" r="260" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="400" cy="380" r="220" fill="none" stroke="#E3C4BC" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <!-- Floral Bouquet Group -->
+  <g filter="url(#softShadow)">
+    <!-- Bouquet Wrapping Paper -->
+    <path d="M400 600 L280 430 Q400 460 520 430 Z" fill="url(#paperGrad)"/>
+    <path d="M400 600 L280 430 L340 370 Q400 400 460 370 L520 430 Z" fill="#DFC4A9" opacity="0.5"/>
+    <path d="M400 600 L320 430 Q400 450 480 430 Z" fill="#E8D1BC"/>
+
+    <!-- Stems -->
+    <path d="M370 420 Q360 480 395 560" stroke="#3D6852" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M400 420 Q400 480 400 560" stroke="#29483B" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <path d="M430 420 Q440 480 405 560" stroke="#3D6852" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+    <!-- Leaves -->
+    <path d="M330 350 Q300 320 330 290 Q360 320 330 350 Z" fill="#4D7C65"/>
+    <path d="M470 350 Q500 320 470 290 Q440 320 470 350 Z" fill="#4D7C65"/>
+    <path d="M290 310 Q250 290 280 260 Q320 280 290 310 Z" fill="#6B9981"/>
+    <path d="M510 310 Q550 290 520 260 Q480 280 510 310 Z" fill="#6B9981"/>
+
+    <!-- Center Sunflower -->
+    <g transform="translate(400, 290)">
+      <!-- Petals -->
+      <g fill="url(#sunGrad)">
+        <ellipse cx="0" cy="-55" rx="14" ry="32"/>
+        <ellipse cx="39" cy="-39" rx="14" ry="32" transform="rotate(45 39 -39)"/>
+        <ellipse cx="55" cy="0" rx="14" ry="32" transform="rotate(90 55 0)"/>
+        <ellipse cx="39" cy="39" rx="14" ry="32" transform="rotate(135 39 39)"/>
+        <ellipse cx="0" cy="55" rx="14" ry="32"/>
+        <ellipse cx="-39" cy="39" rx="14" ry="32" transform="rotate(45 -39 39)"/>
+        <ellipse cx="-55" cy="0" rx="14" ry="32" transform="rotate(90 -55 0)"/>
+        <ellipse cx="-39" cy="-39" rx="14" ry="32" transform="rotate(135 -39 -39)"/>
+      </g>
+      <!-- Center Disc -->
+      <circle cx="0" cy="0" r="32" fill="#5C3317"/>
+      <circle cx="0" cy="0" r="26" fill="#7A4520"/>
+      <circle cx="0" cy="0" r="20" fill="#4A250D" stroke="#D9822B" stroke-width="2" stroke-dasharray="3 3"/>
+    </g>
+
+    <!-- Left Rose (Pipe cleaner craft style) -->
+    <g transform="translate(320, 240)">
+      <circle cx="0" cy="0" r="38" fill="url(#roseGrad)"/>
+      <path d="M-20 -5 Q0 -25 20 -5 Q10 20 -15 15 Q-20 5 -5 -10 Q10 -5 5 5" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+    </g>
+
+    <!-- Right Rose (Pipe cleaner craft style) -->
+    <g transform="translate(480, 240)">
+      <circle cx="0" cy="0" r="38" fill="url(#roseGrad)"/>
+      <path d="M-20 -5 Q0 -25 20 -5 Q10 20 -15 15 Q-20 5 -5 -10 Q10 -5 5 5" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+    </g>
+
+    <!-- Top Delicate Lily / Lavender Buds -->
+    <circle cx="400" cy="180" r="14" fill="#C084FC"/>
+    <circle cx="380" cy="195" r="12" fill="#E879F9"/>
+    <circle cx="420" cy="195" r="12" fill="#E879F9"/>
+    <circle cx="355" cy="200" r="10" fill="#F472B6"/>
+    <circle cx="445" cy="200" r="10" fill="#F472B6"/>
+
+    <!-- Bouquet Ribbon Bow -->
+    <g transform="translate(400, 480)">
+      <path d="M-35 -15 C-60 -35 -70 5 -35 15 C-15 18 -5 5 0 0 C5 5 15 18 35 15 C70 5 60 -35 35 -15 C20 -5 10 -2 0 0 Z" fill="#B35D6F"/>
+      <circle cx="0" cy="0" r="9" fill="#8C3F50"/>
+      <path d="M-6 8 Q-25 45 -40 65" stroke="#B35D6F" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path d="M6 8 Q25 45 40 65" stroke="#B35D6F" stroke-width="8" stroke-linecap="round" fill="none"/>
+    </g>
+  </g>
+
+  <!-- Sparkles -->
+  <g fill="#D97706" opacity="0.85">
+    <path d="M220 220 Q225 235 240 240 Q225 245 220 260 Q215 245 200 240 Q215 235 220 220 Z"/>
+    <path d="M580 200 Q584 212 596 216 Q584 220 580 232 Q576 220 564 216 Q576 212 580 200 Z"/>
+    <path d="M230 430 Q233 440 243 443 Q233 446 230 456 Q227 446 217 443 Q227 440 230 430 Z"/>
+    <path d="M570 420 Q573 430 583 433 Q573 436 570 446 Q567 436 557 433 Q567 430 570 420 Z"/>
+  </g>
+
+  <!-- Bottom Brand Sample Badge -->
+  <g transform="translate(400, 720)">
+    <rect x="-190" y="-22" width="380" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.94" stroke="#29483B" stroke-width="1.5" filter="url(#softShadow)"/>
+    <circle cx="-160" cy="0" r="5" fill="#B35D6F"/>
+    <text x="-145" y="5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="700" fill="#29483B" letter-spacing="1.2">
+      FLORETTTZ • BOUQUETS &amp; FLOWERS
+    </text>
+  </g>
+</svg>

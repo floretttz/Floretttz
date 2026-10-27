@@ -56,7 +56,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
             name="q"
             type="search"
             defaultValue={params.q ?? ""}
-            className="field pl-10 w-full"
+            className="field field-search pl-11 w-full"
             placeholder="Search flowers, gifts, hampers, decor..."
           />
         </div>

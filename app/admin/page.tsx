@@ -31,6 +31,9 @@ import { PhoneInput } from "@/components/phone-input";
 import {
   adminLogin,
   createAdminCategory,
+  updateAdminCategory,
+  getAdminCategoryProductCount,
+  deleteAdminCategory,
   createAdminProduct,
   createAdminVariant,
   deleteAdminVariant,
@@ -49,6 +52,7 @@ import {
   updateAdminProduct,
   uploadAdminImage,
 } from "@/lib/api";
+import { getProductPlaceholder } from "@/components/product-visual";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { AdminOrder, AdminOverview, Category, Product } from "@/lib/types";
 
@@ -114,6 +118,21 @@ export default function AdminPage() {
   const [catSlug, setCatSlug] = useState("");
   const [catName, setCatName] = useState("");
   const [catDesc, setCatDesc] = useState("");
+
+  // Category edit state
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+  const [editCatSlug, setEditCatSlug] = useState("");
+  const [editCatDesc, setEditCatDesc] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
+
+  // Category delete state
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
+  const [catProductCount, setCatProductCount] = useState<number | null>(null);
+  const [reassignTargetId, setReassignTargetId] = useState<number | "">("");
+  const [checkingCatDelete, setCheckingCatDelete] = useState(false);
+  const [deletingCategoryLoading, setDeletingCategoryLoading] = useState(false);
+
 
   // Upload state
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -442,8 +461,24 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file || !sessionToken) return;
 
+    // 1. Client-side MIME validation
+    const validMimes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validMimes.includes(file.type)) {
+      alert("Invalid file format. Please select a JPEG, PNG, or WebP image.");
+      e.target.value = "";
+      return;
+    }
+
+    // 2. Client-side size validation (5MB max)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert(`File size exceeds 5MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please choose a smaller photo.`);
+      e.target.value = "";
+      return;
+    }
+
     setUploadingImage(true);
-    setUploadMessage("");
+    setUploadMessage("Uploading photo...");
     try {
       const res = await uploadAdminImage(sessionToken, file);
       if (target === "new") {
@@ -451,13 +486,93 @@ export default function AdminPage() {
       } else if (editingProduct) {
         setEditingProduct({ ...editingProduct, image_url: res.url });
       }
-      setUploadMessage(`Uploaded: ${res.filename}`);
+      setUploadMessage(`Uploaded successfully: ${res.filename}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Image upload failed");
+      alert(err instanceof Error ? err.message : "Image upload failed. Please try again.");
+      setUploadMessage("");
     } finally {
       setUploadingImage(false);
+      e.target.value = "";
     }
   }
+
+  function openEditCategory(category: Category) {
+    setEditingCategory(category);
+    setEditCatName(category.name);
+    setEditCatSlug(category.slug);
+    setEditCatDesc(category.description || "");
+  }
+
+  async function handleUpdateCategory(e: FormEvent) {
+    e.preventDefault();
+    if (!sessionToken || !editingCategory) return;
+    if (!editCatName.trim() || !editCatSlug.trim()) {
+      alert("Category name and slug are required");
+      return;
+    }
+    setSavingCategory(true);
+    try {
+      const updated = await updateAdminCategory(sessionToken, editingCategory.id, {
+        name: editCatName.trim(),
+        slug: editCatSlug.trim(),
+        description: editCatDesc.trim(),
+      });
+      setCategories((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
+      setEditingCategory(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update category");
+    } finally {
+      setSavingCategory(false);
+    }
+  }
+
+  async function openDeleteCategory(category: Category) {
+    if (!sessionToken) return;
+    setDeletingCategory(category);
+    setCheckingCatDelete(true);
+    setCatProductCount(null);
+    setReassignTargetId("");
+    try {
+      const res = await getAdminCategoryProductCount(sessionToken, category.id);
+      setCatProductCount(res.product_count);
+      const otherCats = categories.filter((c) => c.id !== category.id);
+      if (otherCats.length > 0) {
+        setReassignTargetId(otherCats[0].id);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to check category products");
+      setDeletingCategory(null);
+    } finally {
+      setCheckingCatDelete(false);
+    }
+  }
+
+  async function handleConfirmDeleteCategory() {
+    if (!sessionToken || !deletingCategory) return;
+    if (catProductCount && catProductCount > 0 && !reassignTargetId) {
+      alert("Please select a category to reassign associated products to.");
+      return;
+    }
+    setDeletingCategoryLoading(true);
+    try {
+      await deleteAdminCategory(
+        sessionToken,
+        deletingCategory.id,
+        catProductCount && catProductCount > 0 ? Number(reassignTargetId) : undefined
+      );
+      setCategories((cur) => cur.filter((c) => c.id !== deletingCategory.id));
+      if (catProductCount && catProductCount > 0) {
+        loadProducts();
+      }
+      setDeletingCategory(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete category");
+    } finally {
+      setDeletingCategoryLoading(false);
+    }
+  }
+
+
 
   async function handleUpdateOrderStatus(orderId: number, newStatus: string) {
     if (!sessionToken) return;
@@ -749,14 +864,14 @@ export default function AdminPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 flex-1 max-w-md">
               <div className="relative w-full">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-forest" />
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-forest" />
                 <input
-                  type="text"
+                  type="search"
                   placeholder="Search by name, SKU..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && loadProducts()}
-                  className="field pl-9 text-sm"
+                  className="field field-search pl-11 text-sm"
                 />
               </div>
             </div>
@@ -974,10 +1089,42 @@ export default function AdminPage() {
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((c) => (
-              <div key={c.id} className="rounded-xl border border-rose/25 bg-white p-4 shadow-sm">
-                <h3 className="font-display text-lg text-forest">{c.name}</h3>
-                <p className="mt-0.5 font-mono text-xs text-ink/60">{c.slug}</p>
-                <p className="mt-2 text-xs leading-5 text-ink/75">{c.description || "No description provided."}</p>
+              <div
+                key={c.id}
+                id={`category-card-${c.slug}`}
+                className="rounded-xl border border-rose/25 bg-white p-4 shadow-sm flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-display text-lg text-forest">{c.name}</h3>
+                      <p className="mt-0.5 font-mono text-xs text-ink/60">{c.slug}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        id={`btn-edit-category-${c.slug}`}
+                        type="button"
+                        onClick={() => openEditCategory(c)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-forest/20 text-forest hover:bg-forest hover:text-white transition"
+                        title={`Edit ${c.name}`}
+                        aria-label={`Edit category ${c.name}`}
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button
+                        id={`btn-delete-category-${c.slug}`}
+                        type="button"
+                        onClick={() => openDeleteCategory(c)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose/30 text-rose hover:bg-rose hover:text-white transition"
+                        title={`Delete ${c.name}`}
+                        aria-label={`Delete category ${c.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-ink/75">{c.description || "No description provided."}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -1348,11 +1495,31 @@ export default function AdminPage() {
                   />
                   {uploadingImage && <RefreshCw className="h-4 w-4 animate-spin text-forest" />}
                 </div>
-                {newImageUrl && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <img src={newImageUrl} alt="Preview" className="h-12 w-12 rounded object-cover border" />
-                    <span className="text-xs text-forest font-bold">Image attached</span>
+                {newImageUrl ? (
+                  <div className="mt-2 flex items-center gap-3">
+                    <img
+                      src={newImageUrl}
+                      alt="Preview"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholders/default.svg";
+                      }}
+                      className="h-14 w-14 rounded-lg object-cover border border-rose/30"
+                    />
+                    <div>
+                      <span className="text-xs text-forest font-bold block">Photo attached</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewImageUrl("")}
+                        className="text-xs text-rose underline hover:text-rose/80"
+                      >
+                        Remove photo
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <p className="mt-1 text-xs text-ink/60">
+                    No photo uploaded. The category sample placeholder will be assigned automatically.
+                  </p>
                 )}
               </div>
 
@@ -1504,16 +1671,37 @@ export default function AdminPage() {
                   />
                   {uploadingImage && <RefreshCw className="h-4 w-4 animate-spin text-forest" />}
                 </div>
-                {editingProduct.image_url && (
+                {editingProduct.image_url ? (
                   <div className="mt-2 flex items-center gap-3">
-                    <img src={editingProduct.image_url} alt="" className="h-12 w-12 rounded object-cover border" />
-                    <button
-                      type="button"
-                      onClick={() => setEditingProduct({ ...editingProduct, image_url: null })}
-                      className="text-xs text-rose underline"
-                    >
-                      Remove photo
-                    </button>
+                    <img
+                      src={editingProduct.image_url}
+                      alt={editingProduct.name}
+                      onError={(e) => {
+                        e.currentTarget.src = getProductPlaceholder(editingProduct.category?.slug);
+                      }}
+                      className="h-14 w-14 rounded-lg object-cover border border-rose/30"
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-forest">Product photo active</p>
+                      <button
+                        type="button"
+                        onClick={() => setEditingProduct({ ...editingProduct, image_url: null })}
+                        className="text-xs text-rose underline hover:text-rose/80"
+                      >
+                        Remove photo (use sample placeholder)
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex items-center gap-3">
+                    <img
+                      src={getProductPlaceholder(editingProduct.category?.slug)}
+                      alt="Category sample"
+                      className="h-14 w-14 rounded-lg object-cover border border-rose/30 opacity-80"
+                    />
+                    <p className="text-xs text-ink/65 leading-4">
+                      Using <strong>{editingProduct.category?.name || "Craft"}</strong> sample placeholder. Choose a file above to upload permanent photography.
+                    </p>
                   </div>
                 )}
               </div>
@@ -1712,6 +1900,172 @@ export default function AdminPage() {
                 <button id="btn-save-category" type="submit" className="button-primary text-xs">Save Category</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL: EDIT CATEGORY --- */}
+      {editingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-rose/20 pb-3">
+              <h2 className="font-display text-2xl text-forest">Edit Category</h2>
+              <button
+                type="button"
+                onClick={() => setEditingCategory(null)}
+                className="text-ink/60 hover:text-ink"
+                aria-label="Close edit category modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCategory} className="mt-4 space-y-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-ink/70" htmlFor="edit-category-name">
+                  Category Name *
+                </label>
+                <input
+                  id="edit-category-name"
+                  required
+                  value={editCatName}
+                  onChange={(e) => setEditCatName(e.target.value)}
+                  className="field mt-1 text-sm"
+                  placeholder="e.g. Bouquets &amp; Flowers"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-ink/70" htmlFor="edit-category-slug">
+                  Category Slug *
+                </label>
+                <input
+                  id="edit-category-slug"
+                  required
+                  value={editCatSlug}
+                  onChange={(e) => setEditCatSlug(e.target.value)}
+                  className="field mt-1 text-sm font-mono"
+                  placeholder="bouquets-and-flowers"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-ink/70" htmlFor="edit-category-desc">
+                  Description
+                </label>
+                <textarea
+                  id="edit-category-desc"
+                  value={editCatDesc}
+                  onChange={(e) => setEditCatDesc(e.target.value)}
+                  rows={2}
+                  className="field mt-1 text-sm resize-y"
+                  placeholder="Brief note about the category"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-rose/15">
+                <button
+                  type="button"
+                  onClick={() => setEditingCategory(null)}
+                  className="button-secondary text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  id="btn-update-category"
+                  type="submit"
+                  disabled={savingCategory}
+                  className="button-primary text-xs"
+                >
+                  {savingCategory ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL: DELETE CATEGORY CONFIRMATION --- */}
+      {deletingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-rose/20 pb-3">
+              <div className="flex items-center gap-2 text-rose">
+                <ShieldAlert className="h-5 w-5" />
+                <h2 className="font-display text-xl text-rose">Delete Category</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeletingCategory(null)}
+                className="text-ink/60 hover:text-ink"
+                aria-label="Close delete category modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <p className="text-sm text-ink leading-relaxed">
+                Are you sure you want to delete category <strong>&ldquo;{deletingCategory.name}&rdquo;</strong> (<code>{deletingCategory.slug}</code>)?
+              </p>
+
+              {checkingCatDelete ? (
+                <div className="flex items-center gap-2 rounded-lg bg-sage/10 p-3 text-xs text-forest">
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Checking associated products...
+                </div>
+              ) : catProductCount !== null && catProductCount > 0 ? (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 space-y-2">
+                  <p className="font-bold flex items-center gap-1.5">
+                    ⚠️ {catProductCount} product(s) reference this category!
+                  </p>
+                  <p className="leading-5">
+                    To prevent broken category references and ensure catalogue integrity, select a category to reassign these products to:
+                  </p>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-amber-950 block mb-1">
+                      Reassign products to:
+                    </label>
+                    <select
+                      id="reassign-category-select"
+                      value={reassignTargetId}
+                      onChange={(e) => setReassignTargetId(Number(e.target.value))}
+                      className="field bg-white text-xs"
+                    >
+                      {categories
+                        .filter((c) => c.id !== deletingCategory.id)
+                        .map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({c.slug})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <p className="rounded-lg bg-sage/10 p-3 text-xs text-forest">
+                  ✓ No products are currently assigned to this category. It can be safely deleted.
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-rose/15">
+                <button
+                  type="button"
+                  onClick={() => setDeletingCategory(null)}
+                  className="button-secondary text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  id="btn-confirm-delete-category"
+                  type="button"
+                  disabled={deletingCategoryLoading || checkingCatDelete || (catProductCount !== null && catProductCount > 0 && !reassignTargetId)}
+                  onClick={handleConfirmDeleteCategory}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-rose px-4 text-xs font-bold text-white hover:bg-rose/90 transition disabled:opacity-50"
+                >
+                  {deletingCategoryLoading ? "Deleting..." : "Confirm Delete"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

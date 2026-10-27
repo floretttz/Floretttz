@@ -215,6 +215,43 @@ export async function createAdminCategory(
   });
 }
 
+export async function updateAdminCategory(
+  token: string,
+  categoryId: number,
+  data: { name?: string; slug?: string; description?: string }
+): Promise<Category> {
+  return authenticatedFetch<Category>(token, `/api/admin/categories/${categoryId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getAdminCategoryProductCount(
+  token: string,
+  categoryId: number
+): Promise<{ category_id: number; product_count: number }> {
+  return authenticatedFetch<{ category_id: number; product_count: number }>(
+    token,
+    `/api/admin/categories/${categoryId}/product-count`
+  );
+}
+
+export async function deleteAdminCategory(
+  token: string,
+  categoryId: number,
+  reassignToId?: number
+): Promise<{ status: string; id: number; reassigned_products?: number }> {
+  const query = reassignToId ? `?reassign_to_id=${reassignToId}` : "";
+  return authenticatedFetch<{ status: string; id: number; reassigned_products?: number }>(
+    token,
+    `/api/admin/categories/${categoryId}${query}`,
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+
 export async function uploadAdminImage(
   token: string,
   file: File

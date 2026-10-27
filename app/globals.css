@@ -47,5 +47,14 @@ textarea:focus-visible {
 .field { width: 100%; min-height: 44px; border: 1px solid #c7babb; border-radius: .55rem; background: #fff; padding: .68rem .75rem; color: #302a2c; }
 .field:focus { border-color: #29483b; outline: 2px solid transparent; }
 
+/* Dedicated search field styling to guarantee zero icon overlap across all breakpoints */
+.field-search,
+input[type="search"].field,
+input.field-search {
+  padding-left: 2.75rem !important; /* 44px ensures >14px clearance past 16px icon at left-3.5 */
+  padding-right: 1rem;
+}
+
 @media (min-width: 768px) { .container-page { width: min(1200px, calc(100% - 64px)); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+

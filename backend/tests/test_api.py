@@ -753,6 +753,138 @@ def test_production_mode_fails_with_insecure_defaults(monkeypatch):
         Settings()
 
 
+def test_category_crud_full_lifecycle(client):
+    admin_headers = {"x-test-user": "admin-1", "x-test-role": "admin"}
+    user_headers = {"x-test-user": "user-1", "x-test-role": "customer"}
+
+    # 1. Non-admin cannot create category
+    unauth_res = client.post(
+        "/api/admin/categories",
+        json={"name": "Keepsakes", "slug": "keepsakes-test"},
+        headers=user_headers,
+    )
+    assert unauth_res.status_code == 403
+
+    # 2. Admin creates category
+    create_res = client.post(
+        "/api/admin/categories",
+        json={"name": "Special Keepsakes", "slug": "special-keepsakes", "description": "Custom handmade keepsakes"},
+        headers=admin_headers,
+    )
+    assert create_res.status_code == 201
+    cat_id = create_res.json()["id"]
+
+    # 3. Duplicate name or slug rejected with 409
+    dup_res = client.post(
+        "/api/admin/categories",
+        json={"name": "Special Keepsakes", "slug": "different-slug"},
+        headers=admin_headers,
+    )
+    assert dup_res.status_code == 409
+
+    # 4. Read product count (initially 0)
+    count_res = client.get(f"/api/admin/categories/{cat_id}/product-count", headers=admin_headers)
+    assert count_res.status_code == 200
+    assert count_res.json()["product_count"] == 0
+
+    # 5. Admin updates category (renaming & editing slug)
+    update_res = client.patch(
+        f"/api/admin/categories/{cat_id}",
+        json={"name": "Artisan Keepsakes", "slug": "artisan-keepsakes", "description": "Updated keepsake details"},
+        headers=admin_headers,
+    )
+    assert update_res.status_code == 200
+    assert update_res.json()["name"] == "Artisan Keepsakes"
+    assert update_res.json()["slug"] == "artisan-keepsakes"
+
+    # 6. Assign a product to this category
+    prod_res = client.post(
+        "/api/admin/products",
+        json={
+            "sku": "SKU-KEEPSAKE-001",
+            "slug": "keepsake-box-001",
+            "name": "Artisan Keepsake Box",
+            "price": 649,
+            "category_id": cat_id,
+            "published": True,
+            "available_for_order": True,
+        },
+        headers=admin_headers,
+    )
+    assert prod_res.status_code == 201
+    prod_id = prod_res.json()["id"]
+
+    # Product count is now 1
+    count_after = client.get(f"/api/admin/categories/{cat_id}/product-count", headers=admin_headers)
+    assert count_after.json()["product_count"] == 1
+
+    # 7. Deletion blocked with 409 when products are associated
+    block_delete = client.delete(f"/api/admin/categories/{cat_id}", headers=admin_headers)
+    assert block_delete.status_code == 409
+    assert "associated product" in block_delete.json()["detail"]
+
+    # 8. Create another category as target for reassignment
+    target_cat_res = client.post(
+        "/api/admin/categories",
+        json={"name": "Target Category", "slug": "target-category"},
+        headers=admin_headers,
+    )
+    assert target_cat_res.status_code == 201
+    target_id = target_cat_res.json()["id"]
+
+    # 9. Delete with reassignment to target category
+    reassign_del = client.delete(
+        f"/api/admin/categories/{cat_id}?reassign_to_id={target_id}",
+        headers=admin_headers,
+    )
+    assert reassign_del.status_code == 200
+    assert reassign_del.json()["status"] == "deleted"
+    assert reassign_del.json()["reassigned_products"] == 1
+
+    # 10. Verify product was safely reassigned and not orphaned or deleted
+    prod_check = client.get(f"/api/products/keepsake-box-001")
+    assert prod_check.status_code == 200
+    assert prod_check.json()["category"]["id"] == target_id
+
+    # 11. Clean up product & target category
+    client.delete(f"/api/admin/products/{prod_id}", headers=admin_headers)
+    clean_target = client.delete(f"/api/admin/categories/{target_id}", headers=admin_headers)
+    assert clean_target.status_code == 200
+
+
+def test_image_upload_formats_and_security(client):
+    admin_headers = {"x-test-user": "admin-1", "x-test-role": "catalog_manager"}
+    user_headers = {"x-test-user": "user-1", "x-test-role": "customer"}
+
+    # 1. Non-staff rejected
+    unauth = client.post(
+        "/api/admin/upload-image",
+        files={"file": ("test.png", io.BytesIO(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"), "image/png")},
+        headers=user_headers,
+    )
+    assert unauth.status_code == 403
+
+    # 2. Valid WebP format accepted
+    webp_content = b"RIFF\x1a\x00\x00\x00WEBPVP8 \x0e\x00\x00\x000\x01\x00\x9d\x01*\x01\x00\x01\x00\x00"
+    webp_res = client.post(
+        "/api/admin/upload-image",
+        files={"file": ("flower.webp", io.BytesIO(webp_content), "image/webp")},
+        headers=admin_headers,
+    )
+    assert webp_res.status_code == 200
+    assert webp_res.json()["mime_type"] == "image/webp"
+
+    # 3. Valid JPEG format accepted
+    jpeg_content = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xff\xdb\x00C"
+    jpeg_res = client.post(
+        "/api/admin/upload-image",
+        files={"file": ("bouquet.jpg", io.BytesIO(jpeg_content), "image/jpeg")},
+        headers=admin_headers,
+    )
+    assert jpeg_res.status_code == 200
+    assert jpeg_res.json()["mime_type"] == "image/jpeg"
+
+
 
 
 

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF9F4"/>
+      <stop offset="50%" stop-color="#FDF3E7"/>
+      <stop offset="100%" stop-color="#FAECD8"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F5E6DC"/>
+    </linearGradient>
+    <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D97589"/>
+      <stop offset="100%" stop-color="#B35D6F"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#4A2828" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bgGrad)"/>
+  <circle cx="400" cy="380" r="260" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="400" cy="380" r="220" fill="none" stroke="#E6CEBD" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <!-- Gift Box Group -->
+  <g filter="url(#softShadow)">
+    <!-- Box Body -->
+    <rect x="250" y="320" width="300" height="260" rx="16" fill="url(#boxGrad)" stroke="#E3C4BC" stroke-width="3"/>
+    
+    <!-- Vertical Ribbon -->
+    <rect x="375" y="320" width="50" height="260" fill="url(#ribbonGrad)"/>
+    <line x1="400" y1="320" x2="400" y2="580" stroke="#FFE082" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+
+    <!-- Horizontal Ribbon -->
+    <rect x="250" y="420" width="300" height="48" fill="url(#ribbonGrad)"/>
+    <line x1="250" y1="444" x2="550" y2="444" stroke="#FFE082" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+
+    <!-- Box Lid -->
+    <rect x="235" y="275" width="330" height="60" rx="12" fill="#FFFFFF" stroke="#DFC4A9" stroke-width="3"/>
+    <rect x="375" y="275" width="50" height="60" fill="url(#ribbonGrad)"/>
+
+    <!-- Personalised Wooden Tag -->
+    <g transform="translate(470, 360) rotate(15)">
+      <!-- String -->
+      <path d="M-40 -40 Q-20 -10 -5 10" stroke="#8C6D58" stroke-width="3" fill="none"/>
+      <!-- Tag Body -->
+      <rect x="0" y="0" width="90" height="55" rx="8" fill="#FFF2DF" stroke="#C2A287" stroke-width="2"/>
+      <circle cx="12" cy="27" r="4" fill="#8C6D58"/>
+      <!-- Text Lines -->
+      <line x1="26" y1="20" x2="75" y2="20" stroke="#B35D6F" stroke-width="3" stroke-linecap="round"/>
+      <line x1="26" y1="35" x2="65" y2="35" stroke="#29483B" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+
+    <!-- Ornate Satin Bow on Top -->
+    <g transform="translate(400, 260)">
+      <!-- Left Loop -->
+      <path d="M0 -5 C-50 -70 -130 -30 -60 20 C-30 40 -10 15 0 0 Z" fill="url(#ribbonGrad)"/>
+      <path d="M-15 -5 C-45 -45 -95 -20 -50 15 Z" fill="#943F51" opacity="0.5"/>
+      <!-- Right Loop -->
+      <path d="M0 -5 C50 -70 130 -30 60 20 C30 40 10 15 0 0 Z" fill="url(#ribbonGrad)"/>
+      <path d="M15 -5 C45 -45 95 -20 50 15 Z" fill="#943F51" opacity="0.5"/>
+      <!-- Center Knot -->
+      <circle cx="0" cy="0" r="22" fill="#8C3F50"/>
+      <circle cx="0" cy="0" r="16" fill="url(#ribbonGrad)"/>
+      <!-- Ribbon Tails -->
+      <path d="M-8 15 Q-40 60 -70 100 Q-50 90 -35 85 Q-20 95 -5 110 Q-5 60 -5 20 Z" fill="url(#ribbonGrad)"/>
+      <path d="M8 15 Q40 60 70 100 Q50 90 35 85 Q20 95 5 110 Q5 60 5 20 Z" fill="url(#ribbonGrad)"/>
+    </g>
+  </g>
+
+  <!-- Floating Sparkles & Confetti Hearts -->
+  <g fill="#D97706" opacity="0.85">
+    <path d="M210 230 Q215 245 230 250 Q215 255 210 270 Q205 255 190 250 Q205 245 210 230 Z"/>
+    <path d="M590 210 Q594 222 606 226 Q594 230 590 242 Q586 230 574 226 Q586 222 590 210 Z"/>
+    <circle cx="210" cy="400" r="7" fill="#B35D6F"/>
+    <circle cx="590" cy="450" r="8" fill="#F5A623"/>
+    <circle cx="240" cy="530" r="6" fill="#3D6852"/>
+    <circle cx="560" cy="330" r="6" fill="#B35D6F"/>
+  </g>
+
+  <!-- Bottom Brand Sample Badge -->
+  <g transform="translate(400, 720)">
+    <rect x="-190" y="-22" width="380" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.94" stroke="#29483B" stroke-width="1.5" filter="url(#softShadow)"/>
+    <circle cx="-160" cy="0" r="5" fill="#B35D6F"/>
+    <text x="-145" y="5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="700" fill="#29483B" letter-spacing="1.2">
+      FLORETTTZ • GIFTS &amp; PERSONALISED
+    </text>
+  </g>
+</svg>
