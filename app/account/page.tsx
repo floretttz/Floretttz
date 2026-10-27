@@ -1,0 +1,2 @@
+import { AccountPanel } from "@/components/account-panel";
+export default function AccountPage() { return <div className="container-page py-10 sm:py-14"><p className="eyebrow">Account</p><h1 className="display mt-1 text-4xl text-forest sm:text-5xl">Your Floretttz space</h1><p className="mt-3 max-w-xl text-ink/70">Profile and account-linked order details stay private to your authenticated session.</p><div className="mt-7"><AccountPanel /></div></div>; }

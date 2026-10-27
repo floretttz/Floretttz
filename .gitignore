@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+.pytest_cache/
+*.coverage
+*.coverage.*
+htmlcov/
+public/test-screenshots/*.png
+public/test-screenshots/audit-report.json
+
+# Next.js Build Output
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Python
+*.py[cod]
+*$py.class
+__pycache__/
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+backend/.env.*
+*.pem
+*.key
+*.cert
+*.crt
+
+# Databases & Local storage
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+*.db
+*.sqlite
+*.sqlite3
+backend/app/uploads/*
+!backend/app/uploads/.gitkeep
+
+# IDE & OS Artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.fouril/
+scratch/

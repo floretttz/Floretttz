@@ -1,0 +1,1 @@
+"""FLORETTTZ FastAPI application package."""

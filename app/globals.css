@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #fff9f4;
+  color: #302a2c;
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+::selection { background: #f3c7d3; color: #302a2c; }
+
+.focus-ring:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #29483b;
+  outline-offset: 3px;
+}
+
+.container-page { width: min(1200px, calc(100% - 32px)); margin-inline: auto; }
+
+.eyebrow { color: #29483b; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.display { font-family: Georgia, Cambria, "Times New Roman", serif; letter-spacing: -.035em; }
+.button-primary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: .5rem; border: 1px solid #29483b; border-radius: .6rem; background: #29483b; color: white; padding: .65rem 1rem; font-weight: 700; transition: background .16s ease, transform .16s ease; }
+.button-primary:hover { background: #1d382e; }
+.button-primary:active { transform: translateY(1px); }
+.button-secondary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: .5rem; border: 1px solid #29483b; border-radius: .6rem; background: transparent; color: #29483b; padding: .65rem 1rem; font-weight: 700; }
+.button-secondary:hover { background: #eff3ed; }
+.field { width: 100%; min-height: 44px; border: 1px solid #c7babb; border-radius: .55rem; background: #fff; padding: .68rem .75rem; color: #302a2c; }
+.field:focus { border-color: #29483b; outline: 2px solid transparent; }
+
+@media (min-width: 768px) { .container-page { width: min(1200px, calc(100% - 64px)); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
