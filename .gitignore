@@ -41,6 +41,7 @@ venv.bak/
 .env.production.local
 backend/.env
 backend/.env.*
+!backend/.env.example
 *.pem
 *.key
 *.cert
