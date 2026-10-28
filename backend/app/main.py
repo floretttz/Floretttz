@@ -1,4 +1,5 @@
 import json
+import logging
 import secrets
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
@@ -45,6 +46,8 @@ from app.schemas import (
 from app.seed import seed
 from app.services import admin_catalogue_products, catalogue_products, create_whatsapp_order, product_query
 
+logger = logging.getLogger("floretttz")
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -63,9 +66,17 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=r"^https://([a-zA-Z0-9_-]+\.)?vercel\.app$",
     allow_credentials=False,
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Idempotency-Key",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+    ],
 )
 
 from fastapi.staticfiles import StaticFiles
@@ -175,7 +186,16 @@ def whatsapp_handoff(
     principal: Principal | None = Depends(get_optional_principal),
 ) -> CheckoutOut:
     customer_id = principal.user_id if principal else None
+    phone_len = len(checkout.customer_phone)
+    masked_phone = f"{checkout.customer_phone[:3]}******{checkout.customer_phone[-4:]}" if phone_len >= 7 else "***"
+    logger.info(
+        "Received WhatsApp handoff request: items_count=%d, customer_name_len=%d, customer_phone=%s",
+        len(checkout.items),
+        len(checkout.customer_name),
+        masked_phone,
+    )
     order, whatsapp_url = create_whatsapp_order(db, checkout, app_settings, customer_id=customer_id)
+    logger.info("Order %s created successfully with total %s", order.reference, order.total)
     return CheckoutOut(
         reference=order.reference,
         status="pending",

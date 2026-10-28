@@ -402,7 +402,7 @@ def test_community_links_endpoint(client):
     data = res.json()
     assert "whatsapp_group_url" in data
     assert "whatsapp_channel_url" in data
-    assert "chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk" in data["whatsapp_group_url"]
+    assert "chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw" in data["whatsapp_group_url"]
     assert "whatsapp.com/channel/0029Vb9L4MLG3R3Zpsx31l1U" in data["whatsapp_channel_url"]
     # Check query params in group url are preserved
     assert "s=cl" in data["whatsapp_group_url"]
@@ -883,6 +883,74 @@ def test_image_upload_formats_and_security(client):
     )
     assert jpeg_res.status_code == 200
     assert jpeg_res.json()["mime_type"] == "image/jpeg"
+
+
+def test_cors_origins_and_preflight(client):
+    headers = {
+        "Origin": "https://floretttz.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "Content-Type,Authorization",
+    }
+    # 1. Production frontend preflight
+    res = client.options("/api/orders/whatsapp-handoff", headers=headers)
+    assert res.status_code == 200
+    assert res.headers.get("access-control-allow-origin") == "https://floretttz.vercel.app"
+    assert "POST" in res.headers.get("access-control-allow-methods", "")
+
+    # 2. Vercel preview domain preflight
+    preview_headers = dict(headers, Origin="https://floretttz-preview-abc123.vercel.app")
+    preview_res = client.options("/api/orders/whatsapp-handoff", headers=preview_headers)
+    assert preview_res.status_code == 200
+    assert preview_res.headers.get("access-control-allow-origin") == "https://floretttz-preview-abc123.vercel.app"
+
+    # 3. Localhost preflight
+    local_headers = dict(headers, Origin="http://localhost:3000")
+    local_res = client.options("/api/orders/whatsapp-handoff", headers=local_headers)
+    assert local_res.status_code == 200
+    assert local_res.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+    # 4. Unauthorized origin is rejected with 400
+    unauth_headers = dict(headers, Origin="https://unauthorized-domain.com")
+    unauth_res = client.options("/api/orders/whatsapp-handoff", headers=unauth_headers)
+    assert unauth_res.status_code == 400
+
+
+def test_checkout_indian_phone_normalization_and_payload_validation(client):
+    products = client.get("/api/products").json()["items"]
+    assert len(products) > 0
+    prod = products[0]
+
+    # 1. 10-digit Indian phone (e.g. 7533832123)
+    order_1 = {
+        "customer_name": "Utkarsh",
+        "customer_phone": "7533832123",
+        "idempotency_key": "test-idem-phone-1",
+        "items": [{"product_id": prod["id"], "quantity": 1}],
+    }
+    res_1 = client.post("/api/orders/whatsapp-handoff", json=order_1)
+    assert res_1.status_code == 201
+    assert "reference" in res_1.json()
+
+    # 2. Normalized +91 E.164 phone
+    order_2 = {
+        "customer_name": "Utkarsh",
+        "customer_phone": "+917533832123",
+        "idempotency_key": "test-idem-phone-2",
+        "items": [{"product_id": prod["id"], "quantity": 1}],
+    }
+    res_2 = client.post("/api/orders/whatsapp-handoff", json=order_2)
+    assert res_2.status_code == 201
+
+    # 3. Double country code rejected
+    order_bad = {
+        "customer_name": "Utkarsh",
+        "customer_phone": "+91917533832123",
+        "idempotency_key": "test-idem-phone-3",
+        "items": [{"product_id": prod["id"], "quantity": 1}],
+    }
+    res_bad = client.post("/api/orders/whatsapp-handoff", json=order_bad)
+    assert res_bad.status_code == 422
+
 
 
 

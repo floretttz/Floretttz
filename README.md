@@ -74,7 +74,7 @@ Open `http://localhost:3000` to browse the store.
 - **Action Required by Owner**: Open your Notion Orders database, click `•••` -> `Connections`, and select **Floretttz's**.
 
 ### WhatsApp Community & Cloud API
-- **Group URL**: `https://chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk?s=cl&p=a&mlu=4&ilr=4`
+- **Group URL**: `https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2`
 - **Channel URL**: `https://whatsapp.com/channel/0029Vb9L4MLG3R3Zpsx31l1U`
 - Displayed prominently in the homepage Community section and site-wide footer.
 - **Cloud API Readiness**: Fully implemented in `backend/app/whatsapp.py` and `backend/app/main.py`:

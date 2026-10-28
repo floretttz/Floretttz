@@ -1,7 +1,20 @@
 import { fallbackCategories, fallbackProducts } from "@/lib/catalogue-fallback";
 import type { AdminOrder, AdminOverview, Category, Product, ProductResponse } from "@/lib/types";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export function getApiUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.endsWith(".vercel.app") || host === "floretttz.vercel.app") {
+      return "https://floretttz.onrender.com";
+    }
+  }
+  return "http://localhost:8000";
+}
+
+const apiUrl = getApiUrl();
 
 export function getWhatsAppNumber(): string {
   return process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "917533832123";
@@ -12,7 +25,7 @@ export function getWhatsAppUrl(text: string = "Hello Floretttz! I would like to 
 }
 
 export function getWhatsAppGroupUrl(): string {
-  return process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL ?? "https://chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk?s=cl&p=a&mlu=4&ilr=4";
+  return process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL ?? "https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2";
 }
 
 export function getWhatsAppChannelUrl(): string {

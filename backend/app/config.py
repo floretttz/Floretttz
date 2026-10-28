@@ -25,11 +25,11 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("FLORETTTZ_ENV", "FLORETZ_ENV", "env"),
     )
     frontend_url: str = Field(
-        default="http://localhost:3000",
+        default="https://floretttz.vercel.app",
         validation_alias=AliasChoices("FLORETTTZ_FRONTEND_URL", "FLORETZ_FRONTEND_URL", "frontend_url"),
     )
     allowed_origins: str = Field(
-        default="http://localhost:3000",
+        default="http://localhost:3000,http://127.0.0.1:3000,https://floretttz.vercel.app",
         validation_alias=AliasChoices("FLORETTTZ_ALLOWED_ORIGINS", "FLORETZ_ALLOWED_ORIGINS", "allowed_origins"),
     )
     database_url: str = Field(
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("FLORETTTZ_ADMIN_PASSWORD", "admin_password"),
     )
     whatsapp_group_url: str = Field(
-        default="https://chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk?s=cl&p=a&mlu=4&ilr=4",
+        default="https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2",
         validation_alias=AliasChoices("NEXT_PUBLIC_WHATSAPP_GROUP_URL", "FLORETTTZ_WHATSAPP_GROUP_URL", "FLORETZ_WHATSAPP_GROUP_URL", "whatsapp_group_url"),
     )
     whatsapp_channel_url: str = Field(
@@ -158,7 +158,11 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        return [item.strip() for item in self.allowed_origins.split(",") if item.strip()]
+        origins = [item.strip().rstrip("/") for item in self.allowed_origins.split(",") if item.strip()]
+        for default_origin in ("http://localhost:3000", "http://127.0.0.1:3000", "https://floretttz.vercel.app"):
+            if default_origin not in origins:
+                origins.append(default_origin)
+        return origins
 
     def get_redacted_status(self) -> dict[str, Any]:
         """Return safe configuration status with all secret values redacted."""

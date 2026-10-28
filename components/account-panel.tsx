@@ -4,13 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Check, Edit3, LogOut, PackageOpen, User, Phone, Mail } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
-import { formatINR } from "@/lib/api";
+import { formatINR, getApiUrl } from "@/lib/api";
 import { CustomerProfile, clearSavedCustomerProfile, getSavedCustomerProfile, saveCustomerProfile } from "@/lib/customer";
 import { PhoneInput } from "@/components/phone-input";
 import { validateAndNormalizeIndianPhone } from "@/lib/phone";
 
 type Order = { reference: string; status: string; total: string; created_at: string };
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export function AccountPanel() {
   const [loading, setLoading] = useState(true);
@@ -60,7 +59,7 @@ export function AccountPanel() {
 
           // Fetch account-linked orders
           try {
-            const res = await fetch(`${API_URL}/api/orders/me`, {
+            const res = await fetch(`${getApiUrl()}/api/orders/me`, {
               headers: { Authorization: `Bearer ${session.access_token}` },
             });
             if (res.ok && active) {

@@ -43,7 +43,7 @@ Storefront (Next.js) -> FastAPI API -> PostgreSQL (Supabase) / SQLite Fallback
 - **Owner Action Required**: The Notion bot `"Floretttz's"` is active, but the owner must share their target Notion Orders database with the bot (open Notion database -> click `•••` -> `Connections` -> select `Floretttz's`).
 
 ### 3. WhatsApp Community Links
-- **Group URL**: `https://chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk?s=cl&p=a&mlu=4&ilr=4`
+- **Group URL**: `https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2`
 - **Channel URL**: `https://whatsapp.com/channel/0029Vb9L4MLG3R3Zpsx31l1U`
 - **Placement**: Featured in a dedicated homepage Community section and the site-wide footer with safe external link handling (`target="_blank"` and `rel="noopener noreferrer"`).
 - **Configuration**: Managed via `NEXT_PUBLIC_WHATSAPP_GROUP_URL` and `NEXT_PUBLIC_WHATSAPP_CHANNEL_URL` with backend API endpoint `GET /api/community`.

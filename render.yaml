@@ -12,15 +12,17 @@ services:
       - key: FLORETTTZ_ENV
         value: production
       - key: FLORETTTZ_FRONTEND_URL
-        sync: false
+        value: https://floretttz.vercel.app
       - key: FLORETTTZ_ALLOWED_ORIGINS
-        sync: false
+        value: https://floretttz.vercel.app,http://localhost:3000
       - key: FLORETTTZ_DATABASE_URL
         sync: false
       - key: FLORETTTZ_WHATSAPP_NUMBER
         value: "917533832123"
       - key: FLORETTTZ_WHATSAPP_BUSINESS_NUMBER
         value: "+917533832123"
+      - key: FLORETTTZ_WHATSAPP_GROUP_URL
+        value: "https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2"
       - key: FLORETTTZ_SUPABASE_URL
         value: https://tzemepkyhzxhtiohdcrh.supabase.co
       - key: FLORETTTZ_SUPABASE_JWKS_URL

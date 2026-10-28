@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { LoaderCircle, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import { formatINR } from "@/lib/api";
+import { formatINR, getApiUrl } from "@/lib/api";
 import { lineKey, useCart } from "@/components/cart-provider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { PhoneInput } from "@/components/phone-input";
@@ -11,7 +11,6 @@ import { validateAndNormalizeIndianPhone } from "@/lib/phone";
 import { getSavedCustomerProfile, saveCustomerProfile } from "@/lib/customer";
 
 type CheckoutResult = { reference: string; total: string; whatsapp_url: string; message: string };
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function CartPage() {
   const { lines, ready, subtotal, updateQuantity, remove, clear } = useCart();
@@ -59,6 +58,7 @@ export default function CartPage() {
     }
 
     setSubmitting(true);
+    const targetApiUrl = getApiUrl();
 
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -70,29 +70,52 @@ export default function CartPage() {
         }
       }
 
-      const response = await fetch(`${API_URL}/api/orders/whatsapp-handoff`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          customer_name: name.trim(),
-          customer_phone: check.normalized,
-          idempotency_key: crypto.randomUUID(),
-          items: lines.map((line) => ({
-            product_id: line.product.id,
-            variant_id: line.variant?.id,
-            quantity: line.quantity,
-            personalisation: line.personalisation,
-          })),
-        }),
-      });
-
-      const payload = (await response.json()) as CheckoutResult | { detail?: string };
-      if (!response.ok || !("reference" in payload)) {
-        throw new Error(
-          typeof payload === "object" && payload && "detail" in payload
-            ? String(payload.detail)
-            : "Unable to validate the order."
+      let response: Response;
+      try {
+        response = await fetch(`${targetApiUrl}/api/orders/whatsapp-handoff`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            customer_name: name.trim(),
+            customer_phone: check.normalized,
+            idempotency_key: crypto.randomUUID(),
+            items: lines.map((line) => ({
+              product_id: line.product.id,
+              variant_id: line.variant?.id,
+              quantity: line.quantity,
+              personalisation: line.personalisation,
+            })),
+          }),
+        });
+      } catch (networkError) {
+        const domain = targetApiUrl.replace(/^https?:\/\//, "");
+        console.error("[Checkout Network/CORS Error]:", networkError);
+        setError(
+          `Unable to reach the checkout service (${domain}). Please check your internet connection or try again in a moment.`
         );
+        return;
+      }
+
+      let payload: unknown = null;
+      try {
+        payload = await response.json();
+      } catch {
+        // Response was not JSON
+      }
+
+      if (!response.ok) {
+        let detailMessage = `Server error (${response.status} ${response.statusText || ""})`.trim();
+        if (payload && typeof payload === "object" && "detail" in payload) {
+          const d = (payload as { detail: unknown }).detail;
+          detailMessage = typeof d === "string" ? d : JSON.stringify(d);
+        }
+        setError(detailMessage || "Unable to validate the order.");
+        return;
+      }
+
+      if (!payload || typeof payload !== "object" || !("reference" in payload)) {
+        setError("Invalid response received from order service. Please try again.");
+        return;
       }
 
       // Save customer profile for next time
@@ -101,9 +124,10 @@ export default function CartPage() {
         phone: check.normalized,
       });
 
-      setResult(payload);
+      setResult(payload as CheckoutResult);
       clear();
     } catch (caught) {
+      console.error("[Checkout Error]:", caught);
       setError(caught instanceof Error ? caught.message : "Unable to begin the WhatsApp handoff. Please try again.");
     } finally {
       setSubmitting(false);

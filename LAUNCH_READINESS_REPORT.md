@@ -76,7 +76,7 @@ All placeholder data (`919999999999`, etc.) has been replaced across configurati
 - **Notion Integration Key**: `replace-with-your-notion-api-key`
 - **Supabase URL**: `https://tzemepkyhzxhtiohdcrh.supabase.co`
 - **Supabase Publishable / Anon Key**: `sb_publishable_6N5GtaPV2X8GABrBO2eZQw_0kR2OmNU`
-- **WhatsApp Community Group Invite**: `https://chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk?s=cl&p=a&mlu=4&ilr=4`
+- **WhatsApp Community Group Invite**: `https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2`
 - **WhatsApp Community Channel**: `https://whatsapp.com/channel/0029Vb9L4MLG3R3Zpsx31l1U`
 
 ---
@@ -107,12 +107,12 @@ All placeholder data (`919999999999`, etc.) has been replaced across configurati
 1. Import repository from `https://github.com/floretttz/Floretttz.git`.
 2. Framework Preset: **Next.js**.
 3. Set Environment Variables in Vercel Dashboard:
-   - `NEXT_PUBLIC_API_URL`: Production backend URL on Render (e.g., `https://floretttz-api.onrender.com`)
+   - `NEXT_PUBLIC_API_URL`: Production backend URL on Render (`https://floretttz.onrender.com`)
    - `NEXT_PUBLIC_SUPABASE_URL`: `https://tzemepkyhzxhtiohdcrh.supabase.co`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: `sb_publishable_6N5GtaPV2X8GABrBO2eZQw_0kR2OmNU`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: `sb_publishable_6N5GtaPV2X8GABrBO2eZQw_0kR2OmNU`
    - `NEXT_PUBLIC_WHATSAPP_NUMBER`: `917533832123`
-   - `NEXT_PUBLIC_WHATSAPP_GROUP_URL`: `https://chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk?s=cl&p=a&mlu=4&ilr=4`
+   - `NEXT_PUBLIC_WHATSAPP_GROUP_URL`: `https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2`
    - `NEXT_PUBLIC_WHATSAPP_CHANNEL_URL`: `https://whatsapp.com/channel/0029Vb9L4MLG3R3Zpsx31l1U`
 4. Deploy.
 

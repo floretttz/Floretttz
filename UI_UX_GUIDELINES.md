@@ -45,7 +45,7 @@
 
 - **Top Announcement Strip (`components/community-banner.tsx`)**: Permanent strip in deep emerald (`#223D32`) at the very top of all pages. Responsive: renders compact `Community: [Group] · [Channel]` on small viewports (<640px) and full labels on desktop.
 - **Hero Community Card (`app/page.tsx`)**: Featured prominently above the fold with distinct, high-contrast action buttons:
-  - *Join WhatsApp Group*: Connect with fellow enthusiasts and discuss custom requests (`https://chat.whatsapp.com/HQAdFVG6arGFh77oRGZsQk?s=cl&p=a&mlu=4&ilr=4`).
+  - *Join WhatsApp Group*: Connect with fellow enthusiasts and discuss custom requests (`https://chat.whatsapp.com/KpDZ3hfIAJH4iFLWSTyXjw?s=cl&p=a&iam=2`).
   - *Follow WhatsApp Channel*: Low-noise broadcasts for catalog drops and festive preorders (`https://whatsapp.com/channel/0029Vb9L4MLG3R3Zpsx31l1U`).
 - **Floating Community Modal (`components/whatsapp-floating-community.tsx`)**: Unobtrusive floating badge at bottom-right (`bottom-5 right-5`) with emerald gradient. Clicking opens a compact modal with distinct Group and Channel cards. Features `Escape` key support, click-outside dismissal, safe-area inset awareness (`env(safe-area-inset-bottom)`), and zero obstruction of cart checkout buttons.
 - **Mobile Menu & Footer**: Direct links in mobile hamburger drawer and permanent site-wide footer.
