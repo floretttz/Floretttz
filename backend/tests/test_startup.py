@@ -1,4 +1,8 @@
 from fastapi.testclient import TestClient
+
+import pytest
+
+from app.database import normalize_database_url, validate_database_url
 from sqlalchemy.orm import configure_mappers
 
 from app.database import Base
@@ -37,3 +41,27 @@ def test_application_imports_and_health_endpoint_responds():
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert response.json()["brand"] == "FLORETTTZ"
+
+
+def test_pooler_url_uses_project_scoped_username_and_encodes_password():
+    normalized = normalize_database_url(
+        "postgresql://postgres:p%40ss%23word@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres",
+        "https://tzemepkyhzxhtiohdcrh.supabase.co",
+    )
+
+    assert normalized.startswith(
+        "postgresql://postgres.tzemepkyhzxhtiohdcrh:p%40ss%23word@"
+    )
+
+
+@pytest.mark.parametrize(
+    "url, message",
+    [
+        ("", "empty"),
+        ("postgresql://postgres@db.example.com:5432/postgres", "username and password"),
+        ("postgresql://user:password@db.example.com/postgres", "include a port"),
+    ],
+)
+def test_database_url_validation_rejects_malformed_settings(url, message):
+    with pytest.raises(ValueError, match=message):
+        validate_database_url(url)
