@@ -1,6 +1,18 @@
+import sys
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
+
+# Python 3.14+ typing.Union descriptor compatibility safeguard for SQLAlchemy < 2.0.40
+if sys.version_info >= (3, 13):
+    try:
+        import sqlalchemy.util.typing as _sa_typing
+        _sa_typing.make_union_type(int, str)
+    except TypeError:
+        from functools import reduce
+        import operator
+        import sqlalchemy.util.typing as _sa_typing
+        _sa_typing.make_union_type = lambda *types: reduce(operator.or_, types)
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
