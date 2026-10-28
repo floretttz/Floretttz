@@ -623,37 +623,45 @@ async def admin_upload_image(
             detail="Unsupported image format. Only JPEG, PNG, and WebP are accepted.",
         )
 
-    # Secure random filename
+    # Upload to a unique, persistent Storage object. Do not fall back to local disk.
     filename = f"{uuid4().hex}.{ext}"
-    uploads_dir = Path(__file__).resolve().parent.parent.parent / "public" / "uploads"
-    uploads_dir.mkdir(parents=True, exist_ok=True)
-    target_path = uploads_dir / filename
+    if (
+        not app_settings.supabase_url
+        or not app_settings.supabase_service_role_key
+        or app_settings.supabase_service_role_key.startswith("replace-with")
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Product image storage is not configured",
+        )
 
-    with open(target_path, "wb") as f:
-        f.write(content)
+    import httpx
 
-    final_url = f"/uploads/{filename}"
+    sb_url = app_settings.supabase_url.rstrip("/")
+    storage_endpoint = f"{sb_url}/storage/v1/object/product-images/products/{filename}"
+    headers = {
+        "Authorization": f"Bearer {app_settings.supabase_service_role_key}",
+        "apikey": app_settings.supabase_service_role_key,
+        "Content-Type": mime,
+        "x-upsert": "false",
+    }
+    try:
+        resp = httpx.post(storage_endpoint, content=content, headers=headers, timeout=10.0)
+    except httpx.HTTPError as exc:
+        logger.warning("Supabase Storage upload failed due to a transport error")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Product image storage is temporarily unavailable",
+        ) from exc
 
-    # Persistent Supabase Storage upload when service role key is configured
-    if app_settings.supabase_url and app_settings.supabase_service_role_key:
-        try:
-            import httpx
-            sb_url = app_settings.supabase_url.rstrip("/")
-            storage_endpoint = f"{sb_url}/storage/v1/object/product-images/products/{filename}"
-            headers = {
-                "Authorization": f"Bearer {app_settings.supabase_service_role_key}",
-                "apikey": app_settings.supabase_service_role_key,
-                "Content-Type": mime,
-                "x-upsert": "true",
-            }
-            resp = httpx.post(storage_endpoint, content=content, headers=headers, timeout=10.0)
-            if resp.status_code in (200, 201):
-                final_url = f"{sb_url}/storage/v1/object/public/product-images/products/{filename}"
-            else:
-                print(f"[Supabase Storage upload returned {resp.status_code}]: {resp.text}")
-        except Exception as e:
-            print(f"[Supabase Storage upload exception]: {e}")
+    if resp.status_code not in (200, 201):
+        logger.warning("Supabase Storage upload returned HTTP %s", resp.status_code)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Product image storage rejected the upload",
+        )
 
+    final_url = f"{sb_url}/storage/v1/object/public/product-images/products/{filename}"
     return ImageUploadOut(
         filename=filename,
         url=final_url,

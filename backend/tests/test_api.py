@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from starlette.requests import Request
 
 from app.auth import Principal, get_current_principal, require_role
-from app.config import Settings
+from app.config import Settings, get_settings
 from app.main import app
 from app.models import Category, Order, Product
 from app.schemas import CheckoutItem, CheckoutRequest
@@ -243,8 +243,20 @@ def test_invalid_or_expired_or_forged_tokens_rejected(client):
     assert "detail" in res.json()
 
 
-def test_unsafe_image_upload_and_invalid_input(client):
+def test_unsafe_image_upload_and_invalid_input(client, monkeypatch):
     headers = {"x-test-user": "admin-1", "x-test-role": "admin"}
+    storage_settings = Settings.model_construct(
+        env="test",
+        database_url="sqlite:///./test_floretz.db",
+        supabase_url="https://example.supabase.co",
+        supabase_service_role_key="test-service-role-key",
+    )
+    monkeypatch.setitem(app.dependency_overrides, get_settings, lambda: storage_settings)
+
+    class StorageResponse:
+        status_code = 201
+
+    monkeypatch.setattr("httpx.post", lambda *args, **kwargs: StorageResponse())
 
     # 1. Reject text file disguised as image
     fake_file = io.BytesIO(b"<script>alert('xss')</script>")
@@ -274,7 +286,7 @@ def test_unsafe_image_upload_and_invalid_input(client):
     assert res_valid.status_code == 200
     data = res_valid.json()
     assert data["mime_type"] == "image/png"
-    assert data["url"].startswith("/uploads/")
+    assert data["url"].startswith("https://example.supabase.co/storage/v1/object/public/product-images/products/")
 
 
 def test_published_product_requires_confirmed_price(client):
@@ -852,9 +864,27 @@ def test_category_crud_full_lifecycle(client):
     assert clean_target.status_code == 200
 
 
-def test_image_upload_formats_and_security(client):
+def test_image_upload_formats_and_security(client, monkeypatch):
     admin_headers = {"x-test-user": "admin-1", "x-test-role": "catalog_manager"}
     user_headers = {"x-test-user": "user-1", "x-test-role": "customer"}
+    storage_settings = Settings.model_construct(
+        env="test",
+        database_url="sqlite:///./test_floretz.db",
+        supabase_url="https://example.supabase.co",
+        supabase_service_role_key="test-service-role-key",
+    )
+    monkeypatch.setitem(app.dependency_overrides, get_settings, lambda: storage_settings)
+
+    class StorageResponse:
+        status_code = 201
+
+    storage_calls = []
+
+    def upload_to_storage(*args, **kwargs):
+        storage_calls.append((args, kwargs))
+        return StorageResponse()
+
+    monkeypatch.setattr("httpx.post", upload_to_storage)
 
     # 1. Non-staff rejected
     unauth = client.post(
@@ -883,6 +913,49 @@ def test_image_upload_formats_and_security(client):
     )
     assert jpeg_res.status_code == 200
     assert jpeg_res.json()["mime_type"] == "image/jpeg"
+    assert webp_res.json()["url"].startswith("https://example.supabase.co/storage/v1/object/public/product-images/products/")
+    assert jpeg_res.json()["url"].startswith("https://example.supabase.co/storage/v1/object/public/product-images/products/")
+    assert webp_res.json()["url"] != jpeg_res.json()["url"]
+    assert len(storage_calls) == 2
+    assert all(call[1]["headers"]["x-upsert"] == "false" for call in storage_calls)
+
+
+def test_image_upload_requires_storage_configuration(client, monkeypatch):
+    settings = Settings.model_construct(env="test", database_url="sqlite:///./test_floretz.db")
+    monkeypatch.setitem(app.dependency_overrides, get_settings, lambda: settings)
+
+    response = client.post(
+        "/api/admin/upload-image",
+        files={"file": ("flower.png", io.BytesIO(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"), "image/png")},
+        headers={"x-test-user": "admin-1", "x-test-role": "catalog_manager"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Product image storage is not configured"
+
+
+def test_image_upload_fails_without_returning_local_url(client, monkeypatch):
+    settings = Settings.model_construct(
+        env="test",
+        database_url="sqlite:///./test_floretz.db",
+        supabase_url="https://example.supabase.co",
+        supabase_service_role_key="test-service-role-key",
+    )
+    monkeypatch.setitem(app.dependency_overrides, get_settings, lambda: settings)
+
+    class StorageResponse:
+        status_code = 500
+
+    monkeypatch.setattr("httpx.post", lambda *args, **kwargs: StorageResponse())
+
+    response = client.post(
+        "/api/admin/upload-image",
+        files={"file": ("flower.png", io.BytesIO(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"), "image/png")},
+        headers={"x-test-user": "admin-1", "x-test-role": "catalog_manager"},
+    )
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Product image storage rejected the upload"
 
 
 def test_cors_origins_and_preflight(client):
@@ -950,10 +1023,3 @@ def test_checkout_indian_phone_normalization_and_payload_validation(client):
     }
     res_bad = client.post("/api/orders/whatsapp-handoff", json=order_bad)
     assert res_bad.status_code == 422
-
-
-
-
-
-
-
